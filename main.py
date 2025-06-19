@@ -23,11 +23,15 @@ def main():
     if read_csv:
         if where:
             key, op_func, value = get_operator(where)
-            read_csv = get_where_data(read_csv, key, op_func, value)
+            read_csv = get_where_data(read_csv, key, op_func, value) if op_func else ''
         if aggregate:
-            key, op_func, value = get_operator(aggregate)
-            read_csv = get_aggregate_data(read_csv, key, op_func, value)
-        out_data(read_csv)
+            key, op_func, agg_func = get_operator(aggregate)
+            read_csv = get_aggregate_data(read_csv, key, op_func, agg_func) if op_func else ''
+
+        if len(read_csv) == 0:
+            print("\nНет данных по запросу для вывода!!!\n")
+        else:
+            out_data(read_csv)
 
 
 def load_file(path):
@@ -52,42 +56,65 @@ def get_operator(where):
     }
     for op_str, op_func in ops.items():
         if op_str in where:
-            key, value = where.split(op_str)
+            key, value = where.split(op_str, 1)
             return key.strip(), op_func, value.strip()
-    raise ValueError('Не верное условие фильтрации!!!')
+    print('\nНе верное условие фильтрации!!!\n')
+    return None, None, None
 
 
 def get_where_data(read_csv, key, op_func, value):
-    """ Фильтрация данных """ #TODO: проверить на фильтрацию строк
+    """ Фильтрация данных """
     where_data: list[dict] = []
     for data in read_csv:
-        if op_func(data.get(key), value):
-            where_data.append(data)
+        try:
+            if op_func(float(data.get(key)), float(value)):
+                where_data.append(data)
+        except:
+            if op_func(data.get(key), value):
+                where_data.append(data)
     return where_data
 
 
-def get_aggregate_data(read_csv, key, op_func, value):
+def get_aggregate_data(read_csv, key, op_func, agg_func):
     """ Агрегация данных """
-    aggr_data = 0
-    if value == 'avg':
-        values = [float(data.get(key)) for data in read_csv]
-        aggr_data = sum(values) / len(values)
-        read_csv = []
-        read_csv.append({'key': value})
+    if op_func != operator.eq:
+        op_symbols = {
+            operator.lt: '<',
+            operator.le: '<=',
+            operator.eq: '=',
+            operator.ne: '!=',
+            operator.ge: '>=',
+            operator.gt: '>',
+        }
+        print(f"\nНе верный синтаксис '{op_symbols[op_func]}'!!!\n")
+        return []
 
-    elif value == 'min':
-        values = [float(data.get(key)) for data in read_csv]
-        aggr_data = min(values)
-        read_csv = []
-        read_csv.append({'key': value})
-    elif value == 'max':
-        values = [float(data.get(key)) for data in read_csv]
-        aggr_data = max(values)
-        read_csv = []
-        read_csv.append({'key': value})
+    aggr_data = None
+    try:
+        if agg_func == 'avg':
+            values = [float(data.get(key)) for data in read_csv if data.get(key) not in (None, '')]
+            aggr_data = sum(values) / len(values) if values else None
+        elif agg_func == 'min':
+            values = [float(data.get(key)) for data in read_csv]
+            aggr_data = min(values) if values else None
+        elif agg_func == 'max':
+            values = [float(data.get(key)) for data in read_csv]
+            aggr_data = max(values) if values else None
+        else:
+            print("\nНе верное условие агрегации!!!\n")
+            return []
+    except:
+        if agg_func == 'min':
+            values = [data.get(key) for data in read_csv]
+            aggr_data = min(values) if values else None
+        elif agg_func == 'max':
+            values = [data.get(key) for data in read_csv]
+            aggr_data = max(values) if values else None
+        else:
+            print("\nНе верное условие агрегации!!! Нельзя получить среднее значение из слов!!!\n")
+            return []
 
-    read_csv.append({key: aggr_data})
-    return read_csv
+    return [{agg_func: aggr_data}]
 
 
 def out_data(data):
