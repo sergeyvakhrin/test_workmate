@@ -1,25 +1,36 @@
 import argparse
 import csv
+from pathlib import Path
+
 from tabulate import tabulate
 import operator
 
 
 def main():
+    """ Обработка csv файла """
     parser = argparse.ArgumentParser(description="Запуска с ключами")
     parser.add_argument('--file', '-f', type=str, help="Путь к входному файлу")
     parser.add_argument('--where', '-w', type=str, help="Фильтрация по столбцу")
     parser.add_argument('--aggregate', '-a', type=str, help="Агрегация по столбцу")
+    # TODO: Команды можно легко добавить
+
     args = parser.parse_args()
 
-    file = args.file
+    # Получаем исходные данные
+    file = Path(args.file)
+    if not file.exists():
+        print(f"Файл {file} не найден")
+        return
     where = args.where
     aggregate = args.aggregate
     print(f"Входной файл: {file}")
     print(f"Фильтрация по столбцу: {where}")
     print(f"Агрегация по столбцу: {aggregate}")
 
+    # Загружаем данные из файла
     read_csv = load_file(file) if file else None
 
+    # Запускаем обработку данных
     if read_csv:
         if where:
             key, op_func, value = get_operator(where)
@@ -34,7 +45,7 @@ def main():
             out_data(read_csv)
 
 
-def load_file(path):
+def load_file(path) -> list[dict]:
     """ Загрузка данных из файла csv """
     with open(path, 'r', encoding='utf-8') as file:
         reader_dict = csv.DictReader(file, delimiter=',')
@@ -44,7 +55,7 @@ def load_file(path):
     return obj_list
 
 
-def get_operator(where):
+def get_operator(where) -> tuple:
     """ Получает оператор сравнения для фильтрации """
     ops = {
         '>=': operator.ge,
@@ -62,7 +73,7 @@ def get_operator(where):
     return None, None, None
 
 
-def get_where_data(read_csv, key, op_func, value):
+def get_where_data(read_csv, key, op_func, value) -> list[dict]:
     """ Фильтрация данных """
     where_data: list[dict] = []
     for data in read_csv:
@@ -75,7 +86,7 @@ def get_where_data(read_csv, key, op_func, value):
     return where_data
 
 
-def get_aggregate_data(read_csv, key, op_func, agg_func):
+def get_aggregate_data(read_csv, key, op_func, agg_func) -> list[dict]:
     """ Агрегация данных """
     if op_func != operator.eq:
         op_symbols = {
@@ -86,7 +97,8 @@ def get_aggregate_data(read_csv, key, op_func, agg_func):
             operator.ge: '>=',
             operator.gt: '>',
         }
-        print(f"\nНе верный синтаксис '{op_symbols[op_func]}'!!!\n")
+        print(f"\nНе верный синтаксис '{op_symbols[op_func]}'!!!\n"
+              f"Должен стоять знак '='.\n")
         return []
 
     aggr_data = None
@@ -100,6 +112,7 @@ def get_aggregate_data(read_csv, key, op_func, agg_func):
         elif agg_func == 'max':
             values = [float(data.get(key)) for data in read_csv]
             aggr_data = max(values) if values else None
+        # TODO: Можно расширить агрегацию
         else:
             print("\nНе верное условие агрегации!!!\n")
             return []
@@ -117,7 +130,7 @@ def get_aggregate_data(read_csv, key, op_func, agg_func):
     return [{agg_func: aggr_data}]
 
 
-def out_data(data):
+def out_data(data) -> None:
     """ Вывод данных в консоль """
     print(tabulate(data, headers="keys", tablefmt="psql"))
 
