@@ -2,3 +2,4 @@ tabulate
 pytest
 coverage
 pytest-cov
+flake8

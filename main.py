@@ -80,7 +80,7 @@ def get_where_data(read_csv, key, op_func, value) -> list[dict]:
         try:
             if op_func(float(data.get(key)), float(value)):
                 where_data.append(data)
-        except:
+        except ValueError:
             if op_func(data.get(key), value):
                 where_data.append(data)
     return where_data
@@ -116,7 +116,7 @@ def get_aggregate_data(read_csv, key, op_func, agg_func) -> list[dict]:
         else:
             print("\nНе верное условие агрегации!!!\n")
             return []
-    except:
+    except ValueError:
         if agg_func == 'min':
             values = [data.get(key) for data in read_csv]
             aggr_data = min(values) if values else None

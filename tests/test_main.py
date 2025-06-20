@@ -67,7 +67,3 @@ def test_main(capsys):
     main()
     cap = capsys.readouterr()
     assert 'не найден' in cap.out.lower()
-
-
-
-
