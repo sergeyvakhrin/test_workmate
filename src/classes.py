@@ -13,7 +13,7 @@ class InvalidConditionError(CommandError):
 class InvalidAggregationError(CommandError):
     """ Некорректная агрегация """
 
-class FileNotFoundError(CommandError):
+class FileNotFoundError(FileNotFoundError, CommandError):
     """ Файл не найден """
 
 
@@ -44,10 +44,11 @@ class WhereCommand(Command):
             '<': operator.lt,
             '=': operator.eq,
         }
-        for op_str, op_func in ops.items():
-            if op_str in condition:
-                key, value = condition.split(op_str, 1)
-                return key.strip(), op_func, value.strip()
+        condition = condition.replace(' ', '')
+        for op_str in ops:
+            parts = condition.split(op_str, 1)
+            if len(parts) == 2:
+                return parts[0].strip(), ops[op_str], parts[1].strip()
         raise ValueError(f"Не верный оператор сравнения: {condition}!")
 
     def execute(self, data):
@@ -88,10 +89,16 @@ class AggregateCommand(Command):
 
     @staticmethod
     def _parse_expression(expression):
-        if '=' not in expression:
+        if expression.count('=') != 1:
             raise ValueError('Агрегатное выражение должно содержать "="!')
         key, agg_func = expression.split('=', 1)
-        return key.strip(), agg_func.strip()
+        key = key.strip()
+        agg_func = agg_func.strip()
+
+        if not key or not agg_func:
+            raise ValueError("Нет данных для агрегации!")
+
+        return key, agg_func
 
     def execute(self, data):
         if not data:

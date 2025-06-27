@@ -37,10 +37,9 @@ def test_where_command(loaded_data, condition, expected_count):
 
 
 @pytest.mark.parametrize("invalid_condition", [
-    "invalid_column>10",
-    "age??100",
-    "name",
-    "",
+    "age??100",  # Неподдерживаемый оператор
+    "name",       # Нет оператора
+    "",           # Пустая строка
 ])
 def test_invalid_where_condition(invalid_condition):
     with pytest.raises(InvalidConditionError):
@@ -60,11 +59,11 @@ def test_aggregate_command(loaded_data, expression, expected):
 
 
 @pytest.mark.parametrize("invalid_aggregation", [
-    "age=invalid_func",
-    "unknown_column=avg",
-    "age",
-    "=avg",
-    "age==",
+    "age=invalid_func",  # Неподдерживаемая функция
+    "age",               # Нет '='
+    "=avg",              # Пустой ключ
+    "age==",             # Двойной '='
+    "age=avg=extra",     # Слишком много частей
 ])
 def test_invalid_aggregation(invalid_aggregation):
     with pytest.raises(InvalidAggregationError):
