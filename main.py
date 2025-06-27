@@ -1,15 +1,11 @@
 import argparse
-import csv
 from pathlib import Path
-
-from tabulate import tabulate
-import operator
 
 from src.classes import CSVLoader, DataProcessor, WhereCommand, AggregateCommand, CommandError
 from src.utils import print_data
 
 
-def main():
+def main() -> None:
     """ Обработка csv файла в командной строке """
     parser = argparse.ArgumentParser(description="Запуска с ключами")
     parser.add_argument('--file', '-f', type=str, help="Путь к входному файлу")

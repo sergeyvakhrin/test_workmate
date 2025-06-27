@@ -1,7 +1,7 @@
 from tabulate import tabulate
 
 
-def print_data(data):
+def print_data(data) -> None:
     """ Вывод данных в табличном формате """
     if not data:
         print("\nНет данных для вывода!\n")
